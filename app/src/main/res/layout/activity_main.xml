@@ -18,14 +18,16 @@
       android:orientation="horizontal"
       android:layout_alignParentBottom="true"
          android:id="@+id/linearLayout">
-    <Button
-        android:id="@+id/btn_capture"
-        android:layout_width="0dp"
-        android:layout_weight="1"
-        android:layout_gravity="center_vertical"
-        android:layout_height="wrap_content"
-        android:text="Capture" 
-        android:textSize="12sp"/>
+
+         <Button
+             android:id="@+id/btn_capture"
+             android:layout_width="0dp"
+             android:layout_height="wrap_content"
+             android:layout_gravity="center_vertical"
+             android:layout_weight="1"
+             android:text="Capture"
+             android:textSize="12sp"
+             android:visibility="invisible" />
 
     <ToggleButton
         android:id="@+id/btn_record"
@@ -38,23 +40,25 @@
         android:layout_gravity="center_vertical"
         android:textSize="12dp"
         android:checked="false" />
-     
-    <Button
-        android:id="@+id/btn_shoot_photo_mode"
-        android:layout_width="0dp"
-        android:layout_weight="1"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_vertical"
-        android:text="Shoot Photo Mode"
-        android:textSize="12sp"/>
 
-    <Button
-        android:id="@+id/btn_record_video_mode"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:text="Record Video Mode"
-        android:layout_weight="1"
-        android:layout_gravity="center_vertical" />
+         <Button
+             android:id="@+id/btn_shoot_photo_mode"
+             android:layout_width="0dp"
+             android:layout_height="wrap_content"
+             android:layout_gravity="center_vertical"
+             android:layout_weight="1"
+             android:text="Shoot Photo Mode"
+             android:textSize="12sp"
+             android:visibility="invisible" />
+
+         <Button
+             android:id="@+id/btn_record_video_mode"
+             android:layout_width="0dp"
+             android:layout_height="wrap_content"
+             android:layout_gravity="center_vertical"
+             android:layout_weight="1"
+             android:text="Record Video Mode"
+             android:visibility="invisible" />
 
      </LinearLayout>
 
