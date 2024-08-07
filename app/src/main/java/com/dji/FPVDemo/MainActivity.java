@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.graphics.SurfaceTexture;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.TextureView;
 import android.view.View;
@@ -16,6 +17,13 @@ import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import androidx.annotation.NonNull;
+
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 
 import dji.common.camera.SettingsDefinitions;
 import dji.common.camera.SystemState;
@@ -51,6 +59,9 @@ public class MainActivity extends Activity implements SurfaceTextureListener, On
     private TextView recordingTime;
 
     private Handler handler;
+    private Runnable runnable;
+    private File logFile;
+
 
     private FlightController mFlightController;
     private Gimbal gimbal = null;
@@ -69,8 +80,10 @@ public class MainActivity extends Activity implements SurfaceTextureListener, On
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        handler = new Handler();
+        handler = new Handler(Looper.getMainLooper());
 
+        // 初始化或打开txt文件
+        initLogFile();
         initUI();
 
         // The callback for receiving the raw H264 video data for camera live view
@@ -372,31 +385,80 @@ public class MainActivity extends Activity implements SurfaceTextureListener, On
 
     // Method for starting recording
     private void startRecord() {
+        showToast("start recording: success");
+        runnable = new Runnable() {
+            @Override
+            public void run() {
+                // 拍照并获取无人机信息
+                takePhotoAndLogData();
+                // 每2秒执行一次
+                handler.postDelayed(this, 2000);
+            }
+        };
+        handler.post(runnable);
+    }
 
+    private void takePhotoAndLogData() {
+        // 这里添加拍照代码
         final Camera camera = FPVDemoApplication.getCameraInstance();
-        if (camera != null) {
-            camera.startRecordVideo(djiError -> {
-                if (djiError == null) {
-                    showToast("Record video: success");
-                } else {
-                    showToast(djiError.getDescription());
-                }
-            }); // Execute the startRecordVideo API
+        if (camera == null) {
+            return;
+        }
+        camera.startShootPhoto(djiError -> {
+            if (djiError == null) {
+
+            } else {
+                showToast(djiError.getDescription());
+            }
+        });
+        // 获取无人机的经纬度、姿态和当前时间
+
+        String currentTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(new Date());
+
+        // 将信息记录到txt文件中
+        try (FileWriter writer = new FileWriter(logFile, true)) {
+            writer.append(currentTime)
+                    .append(", ")
+                    .append(String.valueOf(droneLocationLat))
+                    .append(", ")
+                    .append(String.valueOf(droneLocationLng))
+                    .append(", ")
+                    .append(String.valueOf(droneLocationAlt))
+                    .append(", ")
+                    .append(String.valueOf(droneAttitude.pitch))
+                    .append(", ")
+                    .append(String.valueOf(droneAttitude.roll))
+                    .append(", ")
+                    .append(String.valueOf(droneAttitude.yaw))
+                    .append(", ")
+                    .append(String.valueOf(gimbalAttitude.getPitch()))
+                    .append(", ")
+                    .append(String.valueOf(gimbalAttitude.getRoll()))
+                    .append(", ")
+                    .append(String.valueOf(gimbalAttitude.getYaw()))
+                    .append("\n");
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
     // Method for stopping recording
     private void stopRecord() {
 
-        Camera camera = FPVDemoApplication.getCameraInstance();
-        if (camera != null) {
-            camera.stopRecordVideo(djiError -> {
-                if (djiError == null) {
-                    showToast("Stop recording: success");
-                } else {
-                    showToast(djiError.getDescription());
-                }
-            }); // Execute the stopRecordVideo API
+//        Camera camera = FPVDemoApplication.getCameraInstance();
+//        if (camera != null) {
+//            camera.stopRecordVideo(djiError -> {
+//                if (djiError == null) {
+//                    showToast("Stop recording: success");
+//                } else {
+//                    showToast(djiError.getDescription());
+//                }
+//            }); // Execute the stopRecordVideo API
+//        }
+        showToast("stop recording: success");
+
+        if (handler != null && runnable != null) {
+            handler.removeCallbacks(runnable);
         }
     }
 
@@ -452,6 +514,46 @@ public class MainActivity extends Activity implements SurfaceTextureListener, On
 
         }
     }
+
+    private void initLogFile() {
+        File dir = new File(getExternalFilesDir(null), "logs");
+        if (!dir.exists()) {
+            dir.mkdirs();
+        }
+        logFile = new File(dir, "drone_log.txt");
+        if (!logFile.exists()) {
+            try {
+                logFile.createNewFile();
+                try (FileWriter writer = new FileWriter(logFile, true)) {
+                    writer.append("currentTime")
+                            .append(", ")
+                            .append("latitude")
+                            .append(", ")
+                            .append("longitude")
+                            .append(", ")
+                            .append("attitude")
+                            .append(", ")
+                            .append("drone_pitch")
+                            .append(", ")
+                            .append("drone_roll")
+                            .append(", ")
+                            .append("drone_yaw")
+                            .append(", ")
+                            .append("gimbal_pitch")
+                            .append(", ")
+                            .append("gimbal_roll")
+                            .append(", ")
+                            .append("gimbal_yaw")
+                            .append("\n");
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
 
     private boolean isMavicAir2() {
         BaseProduct baseProduct = FPVDemoApplication.getProductInstance();
